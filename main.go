@@ -14,6 +14,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -120,6 +121,9 @@ func (a *app) write() error {
 		return xerrors.Errorf("2f: error deriving key: %w", err)
 	}
 
+	sort.Slice(a.keys, func(i, j int) bool {
+		return a.keys[i].Name < a.keys[j].Name
+	})
 	keysJSON, err := json.Marshal(a.keys)
 	if err != nil {
 		return xerrors.Errorf("2f: error marshaling keys: %w", err)
