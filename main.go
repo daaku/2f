@@ -197,6 +197,15 @@ func (a *app) add() error {
 	return a.write()
 }
 
+func (a *app) changePassword() error {
+	var err error
+	a.password, err = promptPassword("new password: ")
+	if err != nil {
+		return err
+	}
+	return a.write()
+}
+
 func (a *app) run(cmd string) error {
 	var err error
 	a.password, err = promptPassword("password: ")
@@ -212,6 +221,8 @@ func (a *app) run(cmd string) error {
 		return a.list()
 	case "add":
 		return a.add()
+	case "passwd":
+		return a.changePassword()
 	}
 	return xerrors.Errorf("2f: unknown command %q", cmd)
 }
