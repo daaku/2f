@@ -56,12 +56,12 @@ func (a *app) read() error {
 		return xerrors.Errorf("2f: error decoding file: %w", err)
 	}
 
-	key, err := scryptKey(a.password, file.PasswordSalt)
+	sealKey, err := scryptKey(a.password, file.PasswordSalt)
 	if err != nil {
 		return xerrors.Errorf("2f: error deriving key: %w", err)
 	}
 
-	decrypted, ok := secretbox.Open(nil, file.Payload, &file.Nonce, &key)
+	decrypted, ok := secretbox.Open(nil, file.Payload, &file.Nonce, &sealKey)
 	if !ok {
 		return xerrors.Errorf("2f: error decrypting data")
 	}
@@ -83,7 +83,7 @@ func (a *app) write() error {
 		return xerrors.Errorf("2f: error populating password salt: %w", err)
 	}
 
-	key, err := scryptKey(a.password, file.PasswordSalt)
+	sealKey, err := scryptKey(a.password, file.PasswordSalt)
 	if err != nil {
 		return xerrors.Errorf("2f: error deriving key: %w", err)
 	}
@@ -93,7 +93,7 @@ func (a *app) write() error {
 		return xerrors.Errorf("2f: error marshaling keys: %w", err)
 	}
 
-	file.Payload = secretbox.Seal(nil, keysJSON, &file.Nonce, &key)
+	file.Payload = secretbox.Seal(nil, keysJSON, &file.Nonce, &sealKey)
 	fileJSON, err := json.Marshal(file)
 	if err != nil {
 		return xerrors.Errorf("2f: error marshaling file: %w", err)
