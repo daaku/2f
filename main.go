@@ -28,7 +28,7 @@ import (
 )
 
 func scryptKey(password []byte, salt [24]byte) ([32]byte, error) {
-	keyS, err := scrypt.Key(password, salt[:], 32768, 8, 1, 32)
+	keyS, err := scrypt.Key(password, salt[:], 1<<20, 8, 1, 32)
 	var key [32]byte
 	copy(key[:], keyS[:32])
 	return key, err
