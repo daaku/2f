@@ -59,7 +59,7 @@ type key struct {
 	Key    []byte
 }
 
-func (k *key) generate(t time.Time) int {
+func (k *key) generate(t time.Time) string {
 	counter := uint64(t.UnixNano()) / 30e9
 	h := hmac.New(sha1.New, k.Key)
 	binary.Write(h, binary.BigEndian, counter)
@@ -69,7 +69,7 @@ func (k *key) generate(t time.Time) int {
 	for i := 0; i < k.Digits && i < 8; i++ {
 		d *= 10
 	}
-	return int(v % d)
+	return fmt.Sprintf("%0*d", k.Digits, int(v % d))
 }
 
 type encFile struct {
@@ -156,7 +156,7 @@ func (a *app) list() error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 	now := time.Now()
 	for _, k := range a.keys {
-		fmt.Fprintf(w, "%s\t  %d\n", k.Name, k.generate(now))
+		fmt.Fprintf(w, "%s\t  %s\n", k.Name, k.generate(now))
 	}
 	return w.Flush()
 }
