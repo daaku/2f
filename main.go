@@ -236,13 +236,17 @@ func main() {
 	a := app{file: fmt.Sprintf("%s/.2f", os.Getenv("HOME"))}
 	flag.StringVar(&a.file, "f", a.file, "file to store data")
 	flag.Parse()
-	if len(flag.Args()) != 1 {
+	if len(flag.Args()) > 1 {
 		fmt.Fprintln(os.Stderr, "2f: unexpected arguments")
 		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	if err := a.run(flag.Arg(0)); err != nil {
+	cmd := "list"
+	if len(flag.Args()) == 1 {
+		cmd = flag.Arg(0)
+	}
+	if err := a.run(cmd); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
