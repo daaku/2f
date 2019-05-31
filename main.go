@@ -162,37 +162,42 @@ func (a *app) list() error {
 }
 
 func (a *app) add() error {
-	name, err := prompt("name: ")
-	if err != nil {
-		return err
-	}
-
-	digitsString, err := prompt("digits (default 6): ")
-	if err != nil {
-		return err
-	}
-	digits := 6
-	if digitsString != "" {
-		digits, _ = strconv.Atoi(digitsString)
-		if digits != 6 || digits != 7 || digits != 8 {
-			return xerrors.New("2f: digits must be one of 6, 7 or 8")
+	for {
+		name, err := prompt("name: ")
+		if err != nil {
+			return err
 		}
-	}
+		if name == "" {
+			break
+		}
 
-	keyB64, err := prompt("key: ")
-	if err != nil {
-		return err
-	}
-	keyBytes, err := base32.StdEncoding.DecodeString(strings.ToUpper(keyB64))
-	if err != nil {
-		return xerrors.Errorf("2f: invalid key %q: %w", keyB64, err)
-	}
+		digitsString, err := prompt("digits (default 6): ")
+		if err != nil {
+			return err
+		}
+		digits := 6
+		if digitsString != "" {
+			digits, _ = strconv.Atoi(digitsString)
+			if digits != 6 || digits != 7 || digits != 8 {
+				return xerrors.New("2f: digits must be one of 6, 7 or 8")
+			}
+		}
 
-	a.keys = append(a.keys, key{
-		Name:   name,
-		Digits: digits,
-		Key:    keyBytes,
-	})
+		keyB64, err := prompt("key: ")
+		if err != nil {
+			return err
+		}
+		keyBytes, err := base32.StdEncoding.DecodeString(strings.ToUpper(keyB64))
+		if err != nil {
+			return xerrors.Errorf("2f: invalid key %q: %w", keyB64, err)
+		}
+
+		a.keys = append(a.keys, key{
+			Name:   name,
+			Digits: digits,
+			Key:    keyBytes,
+		})
+	}
 
 	return a.write()
 }
