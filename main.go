@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -67,7 +66,10 @@ func (a *app) read() error {
 		return xerrors.Errorf("2f: error decrypting data")
 	}
 
-	fmt.Printf("%s\n", decrypted)
+	if err := json.Unmarshal(decrypted, &a.keys); err != nil {
+		return xerrors.Errorf("2f: error unmarshaling keys: %w", err)
+	}
+
 	return nil
 }
 
@@ -119,4 +121,5 @@ func main() {
 	if err := a.read(); err != nil {
 		log.Fatal("read", err)
 	}
+	log.Printf("%+v\n", a)
 }
