@@ -15,11 +15,12 @@ import (
 	"github.com/natefinch/atomic"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/scrypt"
+	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/xerrors"
 )
 
-func scryptKey(password string, salt [24]byte) ([32]byte, error) {
-	keyS, err := scrypt.Key([]byte(password), salt[:], 32768, 8, 1, 32)
+func scryptKey(password []byte, salt [24]byte) ([32]byte, error) {
+	keyS, err := scrypt.Key(password, salt[:], 32768, 8, 1, 32)
 	var key [32]byte
 	copy(key[:], keyS[:32])
 	return key, err
@@ -43,7 +44,7 @@ type encFile struct {
 
 type app struct {
 	file     string
-	password string
+	password []byte
 
 	keys []key
 }
@@ -115,12 +116,20 @@ func (a *app) write() error {
 func (a *app) list() error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, '.', tabwriter.AlignRight|tabwriter.Debug)
 	for _, k := range a.keys {
-		fmt.Fprintln(w, "%s\t%s\t%s", k.Name, k.Digits, k.Key)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", k.Name, k.Digits, k.Key)
 	}
 	return w.Flush()
 }
 
 func (a *app) run(cmd string) error {
+	fmt.Printf("password: ")
+	var err error
+	a.password, err = terminal.ReadPassword(0)
+	if err != nil {
+		return xerrors.Errorf("2f: error reading password: %w", err)
+	}
+	fmt.Println()
+
 	if err := a.read(); err != nil {
 		return err
 	}
