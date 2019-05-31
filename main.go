@@ -3,7 +3,11 @@ package main // import "github.com/daaku/2f"
 import (
 	"bufio"
 	"bytes"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha1"
+	"encoding/base32"
+	"encoding/binary"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -11,6 +15,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -44,7 +49,16 @@ type key struct {
 }
 
 func (k *key) generate(t time.Time) int {
-	return 0
+	counter := uint64(t.UnixNano()) / 30e9
+	h := hmac.New(sha1.New, k.Key)
+	binary.Write(h, binary.BigEndian, counter)
+	sum := h.Sum(nil)
+	v := binary.BigEndian.Uint32(sum[sum[len(sum)-1]&0x0F:]) & 0x7FFFFFFF
+	d := uint32(1)
+	for i := 0; i < k.Digits && i < 8; i++ {
+		d *= 10
+	}
+	return int(v % d)
 }
 
 type encFile struct {
@@ -126,8 +140,9 @@ func (a *app) write() error {
 
 func (a *app) list() error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	now := time.Now()
 	for _, k := range a.keys {
-		fmt.Fprintf(w, "%s\t| %d\t| %s\n", k.Name, k.Digits, k.Key)
+		fmt.Fprintf(w, "%s\t  %d\n", k.Name, k.generate(now))
 	}
 	return w.Flush()
 }
@@ -150,15 +165,19 @@ func (a *app) add() error {
 		}
 	}
 
-	keyBytes, err := prompt("key: ")
+	keyB64, err := prompt("key: ")
 	if err != nil {
 		return err
+	}
+	keyBytes, err := base32.StdEncoding.DecodeString(strings.ToUpper(keyB64))
+	if err != nil {
+		return xerrors.Errorf("2f: invalid key %q: %w", keyB64, err)
 	}
 
 	a.keys = append(a.keys, key{
 		Name:   name,
 		Digits: digits,
-		Key:    []byte(keyBytes),
+		Key:    keyBytes,
 	})
 
 	return a.write()
