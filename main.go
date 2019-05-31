@@ -43,6 +43,16 @@ func prompt(p string) (string, error) {
 	return text[:len(text)-1], nil
 }
 
+func promptPassword(p string) ([]byte, error) {
+	fmt.Printf(p)
+	password, err := terminal.ReadPassword(0)
+	if err != nil {
+		return nil, xerrors.Errorf("2f: error reading %s: %w", p, err)
+	}
+	fmt.Println()
+	return password, nil
+}
+
 type key struct {
 	Name   string
 	Digits int
@@ -188,13 +198,11 @@ func (a *app) add() error {
 }
 
 func (a *app) run(cmd string) error {
-	fmt.Printf("password: ")
 	var err error
-	a.password, err = terminal.ReadPassword(0)
+	a.password, err = promptPassword("password: ")
 	if err != nil {
-		return xerrors.Errorf("2f: error reading password: %w", err)
+		return err
 	}
-	fmt.Println()
 
 	if err := a.read(); err != nil {
 		return err
