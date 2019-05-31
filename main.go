@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/json"
+	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
+	"os"
+	"text/tabwriter"
 	"time"
 
 	"github.com/natefinch/atomic"
@@ -48,6 +51,9 @@ type app struct {
 func (a *app) read() error {
 	data, err := ioutil.ReadFile(a.file)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return xerrors.Errorf("2f: error reading file %q: %w", a.file, err)
 	}
 
@@ -106,20 +112,37 @@ func (a *app) write() error {
 	return nil
 }
 
-func main() {
-	a := app{
-		file:     "/Users/naitik/2f",
-		password: "hello",
-		keys: []key{
-			{Name: "fb"},
-			{Name: "goog"},
-		},
+func (a *app) list() error {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, '.', tabwriter.AlignRight|tabwriter.Debug)
+	for _, k := range a.keys {
+		fmt.Fprintln(w, "%s\t%s\t%s", k.Name, k.Digits, k.Key)
 	}
-	if err := a.write(); err != nil {
-		log.Fatal("write", err)
-	}
+	return w.Flush()
+}
+
+func (a *app) run(cmd string) error {
 	if err := a.read(); err != nil {
-		log.Fatal("read", err)
+		return err
 	}
-	log.Printf("%+v\n", a)
+	switch cmd {
+	case "list":
+		return a.list()
+	}
+	return xerrors.Errorf("2f: unknown command %q", cmd)
+}
+
+func main() {
+	a := app{file: fmt.Sprintf("%s/.2f", os.Getenv("HOME"))}
+	flag.StringVar(&a.file, "f", a.file, "file to store data")
+	flag.Parse()
+	if len(flag.Args()) != 1 {
+		fmt.Fprintln(os.Stderr, "2f: unexpected arguments")
+		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+	if err := a.run(flag.Arg(0)); err != nil {
+		fmt.Fprintf(os.Stderr, "%+v", err)
+		os.Exit(1)
+	}
 }
