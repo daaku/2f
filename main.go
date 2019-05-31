@@ -1,6 +1,7 @@
 package main // import "github.com/daaku/2f"
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/rand"
 	"encoding/json"
@@ -9,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"text/tabwriter"
 	"time"
 
@@ -24,6 +26,15 @@ func scryptKey(password []byte, salt [24]byte) ([32]byte, error) {
 	var key [32]byte
 	copy(key[:], keyS[:32])
 	return key, err
+}
+
+func prompt(p string) (string, error) {
+	fmt.Printf(p)
+	text, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil {
+		return "", xerrors.Errorf("2f: error reading %s: %w", p, err)
+	}
+	return text[:len(text)-1], nil
 }
 
 type key struct {
@@ -121,6 +132,38 @@ func (a *app) list() error {
 	return w.Flush()
 }
 
+func (a *app) add() error {
+	name, err := prompt("name: ")
+	if err != nil {
+		return err
+	}
+
+	digitsString, err := prompt("digits (default 6): ")
+	if err != nil {
+		return err
+	}
+	digits := 6
+	if digitsString != "" {
+		digits, err = strconv.Atoi(digitsString)
+		if err != nil {
+			return xerrors.New("2f: digits must be one of 6, 7 or 8")
+		}
+	}
+
+	keyBytes, err := prompt("key: ")
+	if err != nil {
+		return err
+	}
+
+	a.keys = append(a.keys, key{
+		Name:   name,
+		Digits: digits,
+		Key:    []byte(keyBytes),
+	})
+
+	return a.write()
+}
+
 func (a *app) run(cmd string) error {
 	fmt.Printf("password: ")
 	var err error
@@ -136,6 +179,8 @@ func (a *app) run(cmd string) error {
 	switch cmd {
 	case "list":
 		return a.list()
+	case "add":
+		return a.add()
 	}
 	return xerrors.Errorf("2f: unknown command %q", cmd)
 }
