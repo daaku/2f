@@ -69,7 +69,7 @@ func (k *key) generate(t time.Time) string {
 	for i := 0; i < k.Digits && i < 8; i++ {
 		d *= 10
 	}
-	return fmt.Sprintf("%0*d", k.Digits, int(v % d))
+	return fmt.Sprintf("%0*d", k.Digits, int(v%d))
 }
 
 type encFile struct {
@@ -152,6 +152,15 @@ func (a *app) write() error {
 	return nil
 }
 
+func (a *app) raw() error {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	for _, k := range a.keys {
+		fmt.Fprintf(w, "%s\t| %d\t| %s\n", k.Name, k.Digits,
+			base32.StdEncoding.EncodeToString(k.Key))
+	}
+	return w.Flush()
+}
+
 func (a *app) list() error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 	now := time.Now()
@@ -224,6 +233,8 @@ func (a *app) run(cmd string) error {
 	switch cmd {
 	case "list":
 		return a.list()
+	case "raw":
+		return a.raw()
 	case "add":
 		return a.add()
 	case "passwd":
@@ -238,7 +249,7 @@ func main() {
 	flag.Parse()
 	if len(flag.Args()) > 1 {
 		fmt.Fprintln(os.Stderr, "2f: unexpected arguments")
-		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add|passwd")
+		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add|passwd|raw")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
