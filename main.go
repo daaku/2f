@@ -114,9 +114,9 @@ func (a *app) write() error {
 }
 
 func (a *app) list() error {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, '.', tabwriter.AlignRight|tabwriter.Debug)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 	for _, k := range a.keys {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", k.Name, k.Digits, k.Key)
+		fmt.Fprintf(w, "%s\t| %d\t| %s\n", k.Name, k.Digits, k.Key)
 	}
 	return w.Flush()
 }
