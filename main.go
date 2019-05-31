@@ -144,8 +144,8 @@ func (a *app) add() error {
 	}
 	digits := 6
 	if digitsString != "" {
-		digits, err = strconv.Atoi(digitsString)
-		if err != nil {
+		digits, _ = strconv.Atoi(digitsString)
+		if digits != 6 || digits != 7 || digits != 8 {
 			return xerrors.New("2f: digits must be one of 6, 7 or 8")
 		}
 	}
@@ -196,7 +196,7 @@ func main() {
 		os.Exit(1)
 	}
 	if err := a.run(flag.Arg(0)); err != nil {
-		fmt.Fprintf(os.Stderr, "%+v", err)
+		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
 }
