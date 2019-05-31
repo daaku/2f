@@ -16,6 +16,13 @@ import (
 	"golang.org/x/xerrors"
 )
 
+func scryptKey(password string, salt [24]byte) ([32]byte, error) {
+	keyS, err := scrypt.Key([]byte(password), salt[:], 32768, 8, 1, 32)
+	var key [32]byte
+	copy(key[:], keyS[:32])
+	return key, err
+}
+
 type key struct {
 	Name   string
 	Digits int
@@ -50,12 +57,10 @@ func (a *app) read() error {
 		return xerrors.Errorf("2f: error decoding file: %w", err)
 	}
 
-	keyS, err := scrypt.Key([]byte(a.password), file.PasswordSalt[:], 32768, 8, 1, 32)
+	key, err := scryptKey(a.password, file.PasswordSalt)
 	if err != nil {
 		return xerrors.Errorf("2f: error deriving key: %w", err)
 	}
-	var key [32]byte
-	copy(key[:], keyS[:32])
 
 	decrypted, ok := secretbox.Open(nil, file.Payload, &file.Nonce, &key)
 	if !ok {
@@ -76,12 +81,10 @@ func (a *app) write() error {
 		return xerrors.Errorf("2f: error populating password salt: %w", err)
 	}
 
-	keyS, err := scrypt.Key([]byte(a.password), file.PasswordSalt[:], 32768, 8, 1, 32)
+	key, err := scryptKey(a.password, file.PasswordSalt)
 	if err != nil {
 		return xerrors.Errorf("2f: error deriving key: %w", err)
 	}
-	var key [32]byte
-	copy(key[:], keyS[:32])
 
 	keysJSON, err := json.Marshal(a.keys)
 	if err != nil {
@@ -105,6 +108,10 @@ func main() {
 	a := app{
 		file:     "/Users/naitik/2f",
 		password: "hello",
+		keys: []key{
+			{Name: "fb"},
+			{Name: "goog"},
+		},
 	}
 	if err := a.write(); err != nil {
 		log.Fatal("write", err)
