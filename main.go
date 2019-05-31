@@ -238,7 +238,7 @@ func main() {
 	flag.Parse()
 	if len(flag.Args()) > 1 {
 		fmt.Fprintln(os.Stderr, "2f: unexpected arguments")
-		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add")
+		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add|passwd")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
