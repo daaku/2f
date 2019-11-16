@@ -196,7 +196,7 @@ func (a *app) add() error {
 		if err != nil {
 			return err
 		}
-		keyBytes, err := base32.StdEncoding.DecodeString(strings.ToUpper(keyB64))
+		keyBytes, err := base32.StdEncoding.WithPadding(base32.NoPadding).DecodeString(strings.ToUpper(keyB64))
 		if err != nil {
 			return xerrors.Errorf("2f: invalid key %q: %w", keyB64, err)
 		}
