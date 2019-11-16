@@ -155,7 +155,7 @@ func (a *app) write() error {
 func (a *app) raw() error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 	for _, k := range a.keys {
-		fmt.Fprintf(w, "%s\t| %d\t| %s\n", k.Name, k.Digits,
+		fmt.Fprintf(w, "%s\t| %d\t| %s\t\n", k.Name, k.Digits,
 			base32.StdEncoding.EncodeToString(k.Key))
 	}
 	return w.Flush()
@@ -165,7 +165,7 @@ func (a *app) list() error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 	now := time.Now()
 	for _, k := range a.keys {
-		fmt.Fprintf(w, "%s\t  %s\n", k.Name, k.generate(now))
+		fmt.Fprintf(w, "%s\t  %s\t\n", k.Name, k.generate(now))
 	}
 	return w.Flush()
 }
