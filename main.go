@@ -211,6 +211,22 @@ func (a *app) add() error {
 	return a.write()
 }
 
+func (a *app) rm() error {
+	name, err := prompt("exact name to remove: ")
+	if err != nil {
+		return err
+	}
+
+	keys := make([]key, 0, len(a.keys))
+	for _, k := range a.keys {
+		if k.Name != name {
+			keys = append(keys, k)
+		}
+	}
+	a.keys = keys
+	return a.write()
+}
+
 func (a *app) changePassword() error {
 	var err error
 	a.password, err = promptPassword("new password: ")
@@ -237,6 +253,8 @@ func (a *app) run(cmd string) error {
 		return a.raw()
 	case "add":
 		return a.add()
+	case "rm":
+		return a.rm()
 	case "passwd":
 		return a.changePassword()
 	}
