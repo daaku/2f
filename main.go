@@ -27,6 +27,8 @@ import (
 	"golang.org/x/xerrors"
 )
 
+var b32 = base32.StdEncoding.WithPadding(base32.NoPadding)
+
 func scryptKey(password []byte, salt [24]byte) ([32]byte, error) {
 	keyS, err := scrypt.Key(password, salt[:], 1<<20, 8, 1, 32)
 	var key [32]byte
@@ -156,7 +158,7 @@ func (a *app) raw() error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 	for _, k := range a.keys {
 		fmt.Fprintf(w, "%s\t| %d\t| %s\t\n", k.Name, k.Digits,
-			base32.StdEncoding.EncodeToString(k.Key))
+			b32.EncodeToString(k.Key))
 	}
 	return w.Flush()
 }
@@ -196,7 +198,7 @@ func (a *app) add() error {
 		if err != nil {
 			return err
 		}
-		keyBytes, err := base32.StdEncoding.WithPadding(base32.NoPadding).DecodeString(strings.ToUpper(keyB64))
+		keyBytes, err := b32.DecodeString(strings.ToUpper(keyB64))
 		if err != nil {
 			return xerrors.Errorf("2f: invalid key %q: %w", keyB64, err)
 		}
