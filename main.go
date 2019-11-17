@@ -266,11 +266,14 @@ func (a *app) run(cmd string) error {
 func main() {
 	a := app{file: fmt.Sprintf("%s/.2f", os.Getenv("HOME"))}
 	flag.StringVar(&a.file, "f", a.file, "file to store data")
+	flag.Usage = func() {
+		fmt.Fprintln(os.Stderr, "2f: unexpected arguments")
+		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add|rm|passwd|raw")
+		flag.PrintDefaults()
+	}
 	flag.Parse()
 	if len(flag.Args()) > 1 {
-		fmt.Fprintln(os.Stderr, "2f: unexpected arguments")
-		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add|passwd|raw")
-		flag.PrintDefaults()
+		flag.Usage()
 		os.Exit(1)
 	}
 	cmd := "list"
