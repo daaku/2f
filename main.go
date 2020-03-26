@@ -14,6 +14,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/user"
 	"sort"
 	"strconv"
 	"strings"
@@ -263,8 +264,16 @@ func (a *app) run(cmd string) error {
 	return xerrors.Errorf("2f: unknown command %q", cmd)
 }
 
+func home() string {
+	u, err := user.Current()
+	if err != nil {
+		return os.Getenv("HOME")
+	}
+	return u.HomeDir
+}
+
 func main() {
-	a := app{file: fmt.Sprintf("%s/.2f", os.Getenv("HOME"))}
+	a := app{file: fmt.Sprintf("%s/.2f", home())}
 	flag.StringVar(&a.file, "f", a.file, "file to store data")
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "2f: unexpected arguments")
