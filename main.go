@@ -47,7 +47,7 @@ func prompt(p string) (string, error) {
 
 func promptPassword(p string) ([]byte, error) {
 	fmt.Printf(p)
-	password, err := terminal.ReadPassword(0)
+	password, err := terminal.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return nil, xerrors.Errorf("2f: error reading %s: %w", p, err)
 	}
