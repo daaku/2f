@@ -27,7 +27,6 @@ import (
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/scrypt"
 	"golang.org/x/crypto/ssh/terminal"
-	"golang.org/x/xerrors"
 )
 
 var b32 = base32.StdEncoding.WithPadding(base32.NoPadding)
@@ -43,7 +42,7 @@ func prompt(p string) (string, error) {
 	fmt.Print(p)
 	text, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil {
-		return "", xerrors.Errorf("2f: error reading %s: %w", p, err)
+		return "", errors.WithStack(err)
 	}
 	return text[:len(text)-1], nil
 }
@@ -52,7 +51,7 @@ func promptPassword(p string) ([]byte, error) {
 	fmt.Print(p)
 	password, err := terminal.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
-		return nil, xerrors.Errorf("2f: error reading %s: %w", p, err)
+		return nil, errors.WithStack(err)
 	}
 	fmt.Println()
 	return password, nil
@@ -96,26 +95,26 @@ func (a *app) read() error {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return xerrors.Errorf("2f: error reading file %q: %w", a.file, err)
+		return errors.Wrapf(err, "reading file %q", a.file)
 	}
 
 	var file encFile
 	if err := json.Unmarshal(data, &file); err != nil {
-		return xerrors.Errorf("2f: error decoding file: %w", err)
+		return errors.Wrap(err, "decoding file")
 	}
 
 	sealKey, err := scryptKey(a.password, file.PasswordSalt)
 	if err != nil {
-		return xerrors.Errorf("2f: error deriving key: %w", err)
+		return errors.WithStack(err)
 	}
 
 	decrypted, ok := secretbox.Open(nil, file.Payload, &file.Nonce, &sealKey)
 	if !ok {
-		return xerrors.Errorf("2f: error decrypting data")
+		return errors.New("error decrypting data")
 	}
 
 	if err := json.Unmarshal(decrypted, &a.keys); err != nil {
-		return xerrors.Errorf("2f: error unmarshaling keys: %w", err)
+		return errors.Wrap(err, "unmarshaling keys")
 	}
 
 	return nil
@@ -125,15 +124,15 @@ func (a *app) write() error {
 	var file encFile
 
 	if _, err := io.ReadFull(rand.Reader, file.Nonce[:]); err != nil {
-		return xerrors.Errorf("2f: error populating nonce: %w", err)
+		return errors.WithStack(err)
 	}
 	if _, err := io.ReadFull(rand.Reader, file.PasswordSalt[:]); err != nil {
-		return xerrors.Errorf("2f: error populating password salt: %w", err)
+		return errors.WithStack(err)
 	}
 
 	sealKey, err := scryptKey(a.password, file.PasswordSalt)
 	if err != nil {
-		return xerrors.Errorf("2f: error deriving key: %w", err)
+		return errors.WithStack(err)
 	}
 
 	sort.Slice(a.keys, func(i, j int) bool {
@@ -141,17 +140,17 @@ func (a *app) write() error {
 	})
 	keysJSON, err := json.Marshal(a.keys)
 	if err != nil {
-		return xerrors.Errorf("2f: error marshaling keys: %w", err)
+		return errors.WithStack(err)
 	}
 
 	file.Payload = secretbox.Seal(nil, keysJSON, &file.Nonce, &sealKey)
 	fileJSON, err := json.Marshal(file)
 	if err != nil {
-		return xerrors.Errorf("2f: error marshaling file: %w", err)
+		return errors.WithStack(err)
 	}
 
 	if err := atomic.WriteFile(a.file, bytes.NewReader(fileJSON)); err != nil {
-		return xerrors.Errorf("2f: writing file %q: %w", a.file, err)
+		return errors.WithMessagef(err, "writing file %q", a.file)
 	}
 
 	return nil
@@ -172,11 +171,11 @@ func (a *app) importF(file string) error {
 	for _, row := range records {
 		digits, _ := strconv.Atoi(row[1])
 		if digits < 6 || digits > 8 {
-			return xerrors.New("2f: digits must be one of 6, 7 or 8")
+			return errors.New("2f: digits must be one of 6, 7 or 8")
 		}
 		keyBytes, err := b32.DecodeString(strings.ToUpper(row[2]))
 		if err != nil {
-			return xerrors.Errorf("2f: invalid key %q: %w", row[2], err)
+			return errors.Wrapf(err, "invalid key %q", row[2])
 		}
 		a.keys = append(a.keys, key{
 			Name:   row[0],
@@ -237,7 +236,7 @@ func (a *app) add() error {
 		if digitsString != "" {
 			digits, _ = strconv.Atoi(digitsString)
 			if digits < 6 || digits > 8 {
-				return xerrors.New("2f: digits must be one of 6, 7 or 8")
+				return errors.New("2f: digits must be one of 6, 7 or 8")
 			}
 		}
 
@@ -247,7 +246,7 @@ func (a *app) add() error {
 		}
 		keyBytes, err := b32.DecodeString(strings.ToUpper(keyB64))
 		if err != nil {
-			return xerrors.Errorf("2f: invalid key %q: %w", keyB64, err)
+			return errors.Wrapf(err, "invalid key %q", keyB64)
 		}
 
 		a.keys = append(a.keys, key{
@@ -309,7 +308,7 @@ func (a *app) run(cmd string, arg string) error {
 	case "passwd":
 		return a.changePassword()
 	}
-	return xerrors.Errorf("2f: unknown command %q", cmd)
+	return errors.Errorf("unknown command %q", cmd)
 }
 
 func home() string {
