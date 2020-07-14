@@ -8,6 +8,7 @@ import (
 	"crypto/sha1"
 	"encoding/base32"
 	"encoding/binary"
+	"encoding/csv"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -22,6 +23,7 @@ import (
 	"time"
 
 	"github.com/natefinch/atomic"
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/scrypt"
 	"golang.org/x/crypto/ssh/terminal"
@@ -38,7 +40,7 @@ func scryptKey(password []byte, salt [24]byte) ([32]byte, error) {
 }
 
 func prompt(p string) (string, error) {
-	fmt.Println(p)
+	fmt.Print(p)
 	text, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil {
 		return "", xerrors.Errorf("2f: error reading %s: %w", p, err)
@@ -47,7 +49,7 @@ func prompt(p string) (string, error) {
 }
 
 func promptPassword(p string) ([]byte, error) {
-	fmt.Println(p)
+	fmt.Print(p)
 	password, err := terminal.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return nil, xerrors.Errorf("2f: error reading %s: %w", p, err)
@@ -155,13 +157,57 @@ func (a *app) write() error {
 	return nil
 }
 
-func (a *app) raw() error {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
-	for _, k := range a.keys {
-		fmt.Fprintf(w, "%s\t| %d\t| %s\t\n", k.Name, k.Digits,
-			b32.EncodeToString(k.Key))
+func (a *app) importF(file string) error {
+	fmt.Println("import")
+	contents, err := ioutil.ReadFile(file)
+	if err != nil {
+		return errors.Wrapf(err, "in opening %q", file)
 	}
-	return w.Flush()
+	r := csv.NewReader(bytes.NewReader(contents))
+	records, err := r.ReadAll()
+	if err != nil {
+		return errors.Wrapf(err, "importing from %q", file)
+	}
+	fmt.Println("records", records)
+	for _, row := range records {
+		digits, _ := strconv.Atoi(row[1])
+		if digits < 6 || digits > 8 {
+			return xerrors.New("2f: digits must be one of 6, 7 or 8")
+		}
+		keyBytes, err := b32.DecodeString(strings.ToUpper(row[2]))
+		if err != nil {
+			return xerrors.Errorf("2f: invalid key %q: %w", row[2], err)
+		}
+		a.keys = append(a.keys, key{
+			Name:   row[0],
+			Digits: digits,
+			Key:    keyBytes,
+		})
+	}
+	return a.write()
+}
+
+func (a *app) export(file string) error {
+	var w bytes.Buffer
+	cw := csv.NewWriter(&w)
+	for _, k := range a.keys {
+		row := []string{
+			k.Name,
+			fmt.Sprint(k.Digits),
+			b32.EncodeToString(k.Key),
+		}
+		if err := cw.Write(row); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+	cw.Flush()
+	if err := cw.Error(); err != nil {
+		return errors.WithStack(err)
+	}
+	if err := ioutil.WriteFile(file, w.Bytes(), 0600); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (a *app) list() error {
@@ -239,7 +285,7 @@ func (a *app) changePassword() error {
 	return a.write()
 }
 
-func (a *app) run(cmd string) error {
+func (a *app) run(cmd string, arg string) error {
 	var err error
 	a.password, err = promptPassword("password: ")
 	if err != nil {
@@ -252,8 +298,10 @@ func (a *app) run(cmd string) error {
 	switch cmd {
 	case "list":
 		return a.list()
-	case "raw":
-		return a.raw()
+	case "import":
+		return a.importF(arg)
+	case "export":
+		return a.export(arg)
 	case "add":
 		return a.add()
 	case "rm":
@@ -277,19 +325,15 @@ func main() {
 	flag.StringVar(&a.file, "f", a.file, "file to store data")
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "2f: unexpected arguments")
-		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add|rm|passwd|raw")
+		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add|rm|passwd|import|export")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
-	if len(flag.Args()) > 1 {
-		flag.Usage()
-		os.Exit(1)
-	}
 	cmd := "list"
-	if len(flag.Args()) == 1 {
+	if len(flag.Args()) > 1 {
 		cmd = flag.Arg(0)
 	}
-	if err := a.run(cmd); err != nil {
+	if err := a.run(cmd, flag.Arg(1)); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v\n", err)
 		os.Exit(1)
 	}
