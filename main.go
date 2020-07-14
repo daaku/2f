@@ -38,7 +38,7 @@ func scryptKey(password []byte, salt [24]byte) ([32]byte, error) {
 }
 
 func prompt(p string) (string, error) {
-	fmt.Printf(p)
+	fmt.Println(p)
 	text, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil {
 		return "", xerrors.Errorf("2f: error reading %s: %w", p, err)
@@ -47,7 +47,7 @@ func prompt(p string) (string, error) {
 }
 
 func promptPassword(p string) ([]byte, error) {
-	fmt.Printf(p)
+	fmt.Println(p)
 	password, err := terminal.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return nil, xerrors.Errorf("2f: error reading %s: %w", p, err)
