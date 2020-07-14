@@ -157,7 +157,6 @@ func (a *app) write() error {
 }
 
 func (a *app) importF(file string) error {
-	fmt.Println("import")
 	contents, err := ioutil.ReadFile(file)
 	if err != nil {
 		return errors.Wrapf(err, "in opening %q", file)
@@ -167,11 +166,10 @@ func (a *app) importF(file string) error {
 	if err != nil {
 		return errors.Wrapf(err, "importing from %q", file)
 	}
-	fmt.Println("records", records)
 	for _, row := range records {
 		digits, _ := strconv.Atoi(row[1])
 		if digits < 6 || digits > 8 {
-			return errors.New("2f: digits must be one of 6, 7 or 8")
+			return errors.New("digits must be one of 6, 7 or 8")
 		}
 		keyBytes, err := b32.DecodeString(strings.ToUpper(row[2]))
 		if err != nil {
@@ -236,7 +234,7 @@ func (a *app) add() error {
 		if digitsString != "" {
 			digits, _ = strconv.Atoi(digitsString)
 			if digits < 6 || digits > 8 {
-				return errors.New("2f: digits must be one of 6, 7 or 8")
+				return errors.New("digits must be one of 6, 7 or 8")
 			}
 		}
 
@@ -323,7 +321,7 @@ func main() {
 	a := app{file: fmt.Sprintf("%s/.2f", home())}
 	flag.StringVar(&a.file, "f", a.file, "file to store data")
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "2f: unexpected arguments")
+		fmt.Fprintln(os.Stderr, "unexpected arguments")
 		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add|rm|passwd|import|export")
 		flag.PrintDefaults()
 	}
