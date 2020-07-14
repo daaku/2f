@@ -327,7 +327,7 @@ func main() {
 	}
 	flag.Parse()
 	cmd := "list"
-	if len(flag.Args()) > 1 {
+	if len(flag.Args()) > 0 {
 		cmd = flag.Arg(0)
 	}
 	if err := a.run(cmd, flag.Arg(1)); err != nil {
