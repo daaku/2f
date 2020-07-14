@@ -190,7 +190,7 @@ func (a *app) add() error {
 		digits := 6
 		if digitsString != "" {
 			digits, _ = strconv.Atoi(digitsString)
-			if digits != 6 || digits != 7 || digits != 8 {
+			if digits < 6 || digits > 8 {
 				return xerrors.New("2f: digits must be one of 6, 7 or 8")
 			}
 		}
