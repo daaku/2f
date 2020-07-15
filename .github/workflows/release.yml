@@ -44,6 +44,8 @@ jobs:
         LDFLAGS="$LDFLAGS -X github.com/daaku/buildinfo.releaseVersion=$RELEASE_VERSION"
         LDFLAGS="$LDFLAGS -X github.com/daaku/buildinfo.buildURL=$BUILD_URL"
 
+        GOFLAGS="-trimpath -ldflags='$LDFLAGS'"
+
         go build ./...
     - name: Release
       uses: svenstaro/upload-release-action@2.0.0
