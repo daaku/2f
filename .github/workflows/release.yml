@@ -30,21 +30,9 @@ jobs:
       run: go get -t -d ./...
     - name: Test
       run: go test ./...
+    - uses: daaku/go-buildinfo@v1.0.0
     - name: Build
-      env:
-        RELEASE_VERSION: v${{ github.run_number }}
-        BUILD_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-      run: |
-        BUILD_TIME=$(date +%s)
-        BUILD_HASH=$(git rev-parse --short HEAD)
-
-        LDFLAGS=""
-        LDFLAGS="$LDFLAGS -X github.com/daaku/buildinfo.buildTimeUnix=$BUILD_TIME"
-        LDFLAGS="$LDFLAGS -X github.com/daaku/buildinfo.buildHash=$BUILD_HASH"
-        LDFLAGS="$LDFLAGS -X github.com/daaku/buildinfo.releaseVersion=$RELEASE_VERSION"
-        LDFLAGS="$LDFLAGS -X github.com/daaku/buildinfo.buildURL=$BUILD_URL"
-
-        go build -trimpath -ldflags="$LDFLAGS" ./...
+      run: go build -trimpath -ldflags="$BI_LDFLAGS" ./...
     - name: Release
       uses: svenstaro/upload-release-action@2.0.0
       with:
