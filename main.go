@@ -22,6 +22,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/daaku/buildinfo"
 	"github.com/natefinch/atomic"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/nacl/secretbox"
@@ -282,7 +283,16 @@ func (a *app) changePassword() error {
 	return a.write()
 }
 
+func (a *app) version() error {
+	_, err := os.Stdout.Write(buildinfo.FullInfo())
+	return errors.WithStack(err)
+}
+
 func (a *app) run(cmd string, arg string) error {
+	if cmd == "version" {
+		return a.version()
+	}
+
 	var err error
 	a.password, err = promptPassword("password: ")
 	if err != nil {
@@ -322,7 +332,7 @@ func main() {
 	flag.StringVar(&a.file, "f", a.file, "file to store data")
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "unexpected arguments")
-		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add|rm|passwd|import|export")
+		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add|rm|passwd|import|export|version")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
