@@ -36,6 +36,7 @@ jobs:
     - name: Release
       uses: svenstaro/upload-release-action@2.0.0
       with:
+        overwrite: true
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: ${{ matrix.artifact_name }}
         asset_name: ${{ matrix.asset_name }}
