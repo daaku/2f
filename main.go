@@ -27,7 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/scrypt"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 var b32 = base32.StdEncoding.WithPadding(base32.NoPadding)
@@ -50,7 +50,7 @@ func prompt(p string) (string, error) {
 
 func promptPassword(p string) ([]byte, error) {
 	fmt.Print(p)
-	password, err := terminal.ReadPassword(int(os.Stdin.Fd()))
+	password, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
