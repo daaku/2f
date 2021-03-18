@@ -1,5 +1,7 @@
 github.com/daaku/buildinfo v1.0.2 h1:FGgyeiYRl9mUpncefMY5DtCwZ34Kb/teJ7iQg6w537s=
 github.com/daaku/buildinfo v1.0.2/go.mod h1:sQOz6ziqkwADKnn+hLuSOKe8TmcxKdXr3rcH3Lpsb5U=
+github.com/daaku/qrterm v1.0.1 h1:mzpueLVqeNEPbNtsX0Gqu0x8Od1IJ6oJeo/mXfgsiAc=
+github.com/daaku/qrterm v1.0.1/go.mod h1:W02JixspwvytltAIKlgem7NyDklwly/yQuzYneDSuLI=
 github.com/natefinch/atomic v0.0.0-20200526193002-18c0533a5b09 h1:DXR0VtCesBD2ss3toN9OEeXszpQmW9dc3SvUbUfiBC0=
 github.com/natefinch/atomic v0.0.0-20200526193002-18c0533a5b09/go.mod h1:1rLVY/DWf3U6vSZgH16S7pymfrhK2lcUlXjgGglw/lY=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
@@ -15,3 +17,5 @@ golang.org/x/term v0.0.0-20210317153231-de623e64d2a6 h1:EC6+IGYTjPpRfv9a2b/6Puw0
 golang.org/x/term v0.0.0-20210317153231-de623e64d2a6/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/text v0.3.3/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
 golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
+rsc.io/qr v0.2.0 h1:6vBLea5/NRMVTz8V66gipeLycZMl/+UlFmk8DvqQ6WY=
+rsc.io/qr v0.2.0/go.mod h1:IF+uZjkb9fqyeF/4tlBoynqmQxUoPfWEKh921coOuXs=

@@ -23,11 +23,13 @@ import (
 	"time"
 
 	"github.com/daaku/buildinfo"
+	"github.com/daaku/qrterm"
 	"github.com/natefinch/atomic"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/scrypt"
 	"golang.org/x/term"
+	"rsc.io/qr"
 )
 
 var b32 = base32.StdEncoding.WithPadding(base32.NoPadding)
@@ -283,6 +285,27 @@ func (a *app) changePassword() error {
 	return a.write()
 }
 
+func (a *app) qr(name string) error {
+	all := name == "all"
+	for _, k := range a.keys {
+		if k.Name == name || all {
+			key := base32.StdEncoding.EncodeToString(k.Key)
+			url := fmt.Sprintf("otpauth://totp/%s?secret=%s", k.Name, key)
+			code, err := qr.Encode(url, qr.L)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			if all {
+				fmt.Println(k.Name)
+			}
+			if err := qrterm.WriteSmall(os.Stdout, code); err != nil {
+				return errors.WithStack(err)
+			}
+		}
+	}
+	return nil
+}
+
 func (a *app) version() error {
 	_, err := os.Stdout.Write(buildinfo.FullInfo())
 	return errors.WithStack(err)
@@ -313,6 +336,8 @@ func (a *app) run(cmd string, arg string) error {
 		return a.add()
 	case "rm":
 		return a.rm()
+	case "qr":
+		return a.qr(arg)
 	case "passwd":
 		return a.changePassword()
 	}
@@ -332,7 +357,7 @@ func main() {
 	flag.StringVar(&a.file, "f", a.file, "file to store data")
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, "unexpected arguments")
-		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add|rm|passwd|import|export|version")
+		fmt.Fprintln(os.Stderr, "usage: 2f [-f file] list|add|rm|qr|passwd|import|export|version")
 		flag.PrintDefaults()
 	}
 	flag.Parse()
