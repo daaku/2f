@@ -289,7 +289,7 @@ func (a *app) qr(name string) error {
 	all := name == "all"
 	for _, k := range a.keys {
 		if k.Name == name || all {
-			key := base32.StdEncoding.EncodeToString(k.Key)
+			key := b32.EncodeToString(k.Key)
 			url := fmt.Sprintf("otpauth://totp/%s?secret=%s", k.Name, key)
 			code, err := qr.Encode(url, qr.L)
 			if err != nil {
