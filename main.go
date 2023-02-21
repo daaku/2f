@@ -16,13 +16,13 @@ import (
 	"io/ioutil"
 	"os"
 	"os/user"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
 
-	"github.com/daaku/buildinfo"
 	"github.com/daaku/qrterm"
 	"github.com/natefinch/atomic"
 	"github.com/pkg/errors"
@@ -307,7 +307,8 @@ func (a *app) qr(name string) error {
 }
 
 func (a *app) version() error {
-	_, err := os.Stdout.Write(buildinfo.FullInfo())
+	bi, _ := debug.ReadBuildInfo()
+	_, err := os.Stdout.WriteString(bi.String())
 	return errors.WithStack(err)
 }
 

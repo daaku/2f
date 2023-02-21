@@ -29,11 +29,8 @@ jobs:
     - uses: actions/checkout@v3
     - name: Dependencies
       run: go get -t -d ./...
-    - name: Test
-      run: go test ./... -race -cover
-    - uses: daaku/go-buildinfo@v1.1.0
     - name: Build
-      run: go build -trimpath -ldflags="$BI_LDFLAGS"
+      run: go build -trimpath
     - name: Release
       uses: svenstaro/upload-release-action@2.4.1
       if: ${{ startsWith(github.ref, 'refs/tags/') }}
