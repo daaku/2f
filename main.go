@@ -13,7 +13,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/user"
 	"runtime/debug"
@@ -62,8 +61,8 @@ func promptPassword(p string) ([]byte, error) {
 
 type key struct {
 	Name   string
-	Digits int
 	Key    []byte
+	Digits int
 }
 
 func (k *key) generate(t time.Time) string {
@@ -80,9 +79,9 @@ func (k *key) generate(t time.Time) string {
 }
 
 type encFile struct {
+	Payload      []byte
 	PasswordSalt [24]byte
 	Nonce        [24]byte
-	Payload      []byte
 }
 
 type app struct {
@@ -93,7 +92,7 @@ type app struct {
 }
 
 func (a *app) read() error {
-	data, err := ioutil.ReadFile(a.file)
+	data, err := os.ReadFile(a.file)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -160,7 +159,7 @@ func (a *app) write() error {
 }
 
 func (a *app) importF(file string) error {
-	contents, err := ioutil.ReadFile(file)
+	contents, err := os.ReadFile(file)
 	if err != nil {
 		return errors.Wrapf(err, "in opening %q", file)
 	}
@@ -204,7 +203,7 @@ func (a *app) export(file string) error {
 	if err := cw.Error(); err != nil {
 		return errors.WithStack(err)
 	}
-	if err := ioutil.WriteFile(file, w.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(file, w.Bytes(), 0600); err != nil {
 		return errors.WithStack(err)
 	}
 	return nil
