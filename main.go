@@ -213,7 +213,7 @@ func (a *app) list() error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 	now := time.Now()
 	for _, k := range a.keys {
-		fmt.Fprintf(w, "%s\t  %s\t\n", k.Name, k.generate(now))
+		fmt.Fprintf(w, "%s\t  %s\t%s\n", k.Name, k.generate(now), k.generate(now.Add(30*time.Second)))
 	}
 	return w.Flush()
 }
