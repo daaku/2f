@@ -7,6 +7,6 @@ require (
 	github.com/natefinch/atomic v1.0.1
 	github.com/pkg/errors v0.9.1
 	golang.org/x/crypto v0.17.0
-	golang.org/x/term v0.15.0
+	golang.org/x/term v0.16.0
 	rsc.io/qr v0.2.0
 )
