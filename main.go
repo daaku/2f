@@ -22,9 +22,9 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"braces.dev/errtrace"
 	"github.com/daaku/qrterm"
 	"github.com/natefinch/atomic"
-	"github.com/pkg/errors"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/scrypt"
 	"golang.org/x/term"
@@ -44,7 +44,7 @@ func prompt(p string) (string, error) {
 	fmt.Print(p)
 	text, err := bufio.NewReader(os.Stdin).ReadString('\n')
 	if err != nil {
-		return "", errors.WithStack(err)
+		return "", errtrace.Wrap(err)
 	}
 	return text[:len(text)-1], nil
 }
@@ -53,7 +53,7 @@ func promptPassword(p string) ([]byte, error) {
 	fmt.Print(p)
 	password, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errtrace.Wrap(err)
 	}
 	fmt.Println()
 	return password, nil
@@ -97,26 +97,26 @@ func (a *app) read() error {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return errors.Wrapf(err, "reading file %q", a.file)
+		return errtrace.Errorf("reading file %q: %w", a.file, err)
 	}
 
 	var file encFile
 	if err := json.Unmarshal(data, &file); err != nil {
-		return errors.Wrap(err, "decoding file")
+		return errtrace.Wrap(err)
 	}
 
 	sealKey, err := scryptKey(a.password, file.PasswordSalt)
 	if err != nil {
-		return errors.WithStack(err)
+		return errtrace.Wrap(err)
 	}
 
 	decrypted, ok := secretbox.Open(nil, file.Payload, &file.Nonce, &sealKey)
 	if !ok {
-		return errors.New("error decrypting data")
+		return errtrace.New("error decrypting data")
 	}
 
 	if err := json.Unmarshal(decrypted, &a.keys); err != nil {
-		return errors.Wrap(err, "unmarshaling keys")
+		return errtrace.Errorf("unmarshaling keys: %w", err)
 	}
 
 	return nil
@@ -126,15 +126,15 @@ func (a *app) write() error {
 	var file encFile
 
 	if _, err := io.ReadFull(rand.Reader, file.Nonce[:]); err != nil {
-		return errors.WithStack(err)
+		return errtrace.Wrap(err)
 	}
 	if _, err := io.ReadFull(rand.Reader, file.PasswordSalt[:]); err != nil {
-		return errors.WithStack(err)
+		return errtrace.Wrap(err)
 	}
 
 	sealKey, err := scryptKey(a.password, file.PasswordSalt)
 	if err != nil {
-		return errors.WithStack(err)
+		return errtrace.Wrap(err)
 	}
 
 	sort.Slice(a.keys, func(i, j int) bool {
@@ -142,17 +142,17 @@ func (a *app) write() error {
 	})
 	keysJSON, err := json.Marshal(a.keys)
 	if err != nil {
-		return errors.WithStack(err)
+		return errtrace.Wrap(err)
 	}
 
 	file.Payload = secretbox.Seal(nil, keysJSON, &file.Nonce, &sealKey)
 	fileJSON, err := json.Marshal(file)
 	if err != nil {
-		return errors.WithStack(err)
+		return errtrace.Wrap(err)
 	}
 
 	if err := atomic.WriteFile(a.file, bytes.NewReader(fileJSON)); err != nil {
-		return errors.WithMessagef(err, "writing file %q", a.file)
+		return errtrace.Errorf("writing file %q: %w", a.file, err)
 	}
 
 	return nil
@@ -161,21 +161,21 @@ func (a *app) write() error {
 func (a *app) importF(file string) error {
 	contents, err := os.ReadFile(file)
 	if err != nil {
-		return errors.Wrapf(err, "in opening %q", file)
+		return errtrace.Errorf("in opening %q: %w", file, err)
 	}
 	r := csv.NewReader(bytes.NewReader(contents))
 	records, err := r.ReadAll()
 	if err != nil {
-		return errors.Wrapf(err, "importing from %q", file)
+		return errtrace.Errorf("importing from %q: %w", file, err)
 	}
 	for _, row := range records {
 		digits, _ := strconv.Atoi(row[1])
 		if digits < 6 || digits > 8 {
-			return errors.New("digits must be one of 6, 7 or 8")
+			return errtrace.New("digits must be one of 6, 7 or 8")
 		}
 		keyBytes, err := b32.DecodeString(strings.ToUpper(row[2]))
 		if err != nil {
-			return errors.Wrapf(err, "invalid key %q", row[2])
+			return errtrace.Errorf("invalid key %q: %w", row[2], err)
 		}
 		a.keys = append(a.keys, key{
 			Name:   row[0],
@@ -196,15 +196,15 @@ func (a *app) export(file string) error {
 			b32.EncodeToString(k.Key),
 		}
 		if err := cw.Write(row); err != nil {
-			return errors.WithStack(err)
+			return errtrace.Wrap(err)
 		}
 	}
 	cw.Flush()
 	if err := cw.Error(); err != nil {
-		return errors.WithStack(err)
+		return errtrace.Wrap(err)
 	}
-	if err := os.WriteFile(file, w.Bytes(), 0600); err != nil {
-		return errors.WithStack(err)
+	if err := os.WriteFile(file, w.Bytes(), 0o600); err != nil {
+		return errtrace.Wrap(err)
 	}
 	return nil
 }
@@ -236,7 +236,7 @@ func (a *app) add() error {
 		if digitsString != "" {
 			digits, _ = strconv.Atoi(digitsString)
 			if digits < 6 || digits > 8 {
-				return errors.New("digits must be one of 6, 7 or 8")
+				return errtrace.New("digits must be one of 6, 7 or 8")
 			}
 		}
 
@@ -246,7 +246,7 @@ func (a *app) add() error {
 		}
 		keyBytes, err := b32.DecodeString(strings.ToUpper(keyB64))
 		if err != nil {
-			return errors.Wrapf(err, "invalid key %q", keyB64)
+			return errtrace.Errorf("invalid key %q: %w", keyB64, err)
 		}
 
 		a.keys = append(a.keys, key{
@@ -292,13 +292,13 @@ func (a *app) qr(name string) error {
 			url := fmt.Sprintf("otpauth://totp/%s?secret=%s", k.Name, key)
 			code, err := qr.Encode(url, qr.L)
 			if err != nil {
-				return errors.WithStack(err)
+				return errtrace.Wrap(err)
 			}
 			if all {
 				fmt.Println(k.Name)
 			}
 			if err := qrterm.WriteSmall(os.Stdout, code); err != nil {
-				return errors.WithStack(err)
+				return errtrace.Wrap(err)
 			}
 		}
 	}
@@ -308,7 +308,7 @@ func (a *app) qr(name string) error {
 func (a *app) version() error {
 	bi, _ := debug.ReadBuildInfo()
 	_, err := os.Stdout.WriteString(bi.String())
-	return errors.WithStack(err)
+	return errtrace.Wrap(err)
 }
 
 func (a *app) run(cmd string, arg string) error {
@@ -341,7 +341,7 @@ func (a *app) run(cmd string, arg string) error {
 	case "passwd":
 		return a.changePassword()
 	}
-	return errors.Errorf("unknown command %q", cmd)
+	return errtrace.Errorf("unknown command %q", cmd)
 }
 
 func home() string {
@@ -366,7 +366,7 @@ func main() {
 		cmd = flag.Arg(0)
 	}
 	if err := a.run(cmd, flag.Arg(1)); err != nil {
-		fmt.Fprintf(os.Stderr, "%+v\n", err)
+		errtrace.Format(os.Stderr, err)
 		os.Exit(1)
 	}
 }
