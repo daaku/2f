@@ -1,6 +1,6 @@
 module github.com/daaku/2f
 
-go 1.14
+go 1.22.0
 
 require (
 	github.com/daaku/qrterm v1.0.1
@@ -10,3 +10,5 @@ require (
 	golang.org/x/term v0.17.0
 	rsc.io/qr v0.2.0
 )
+
+require golang.org/x/sys v0.17.0 // indirect
