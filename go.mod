@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.24.1
 
 require (
-	braces.dev/errtrace v0.3.0
+	braces.dev/errtrace v0.4.0
 	github.com/daaku/qrterm v1.0.1
 	github.com/natefinch/atomic v1.0.1
 	golang.org/x/crypto v0.40.0
