@@ -8,7 +8,7 @@ require (
 	braces.dev/errtrace v0.4.0
 	github.com/daaku/qrterm v1.0.1
 	github.com/natefinch/atomic v1.0.1
-	golang.org/x/crypto v0.40.0
+	golang.org/x/crypto v0.41.0
 	golang.org/x/term v0.34.0
 	rsc.io/qr v0.2.0
 )
