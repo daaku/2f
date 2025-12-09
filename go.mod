@@ -8,9 +8,9 @@ require (
 	braces.dev/errtrace v0.4.0
 	github.com/daaku/qrterm v1.0.1
 	github.com/natefinch/atomic v1.0.1
-	golang.org/x/crypto v0.45.0
-	golang.org/x/term v0.37.0
+	golang.org/x/crypto v0.46.0
+	golang.org/x/term v0.38.0
 	rsc.io/qr v0.2.0
 )
 
-require golang.org/x/sys v0.38.0 // indirect
+require golang.org/x/sys v0.39.0 // indirect
