@@ -27,7 +27,7 @@ jobs:
       with:
         go-version: stable
         cache-dependency-path: go.mod
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Dependencies
       run: go get -t -d ./...
     - name: Build
